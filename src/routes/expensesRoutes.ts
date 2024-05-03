@@ -2,11 +2,16 @@ import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { z } from "zod";
 
-type Expense = {
-    _id: number;
-    title: string;
-    amount: number;
-};
+const expenseSchema = z.object({
+    _id: z.number().min(1).positive(),
+    title: z
+        .string()
+        .min(3, "Title should include more than 3 characters")
+        .max(25),
+    amount: z.number().int().positive(),
+});
+
+type Expense = z.infer<typeof expenseSchema>;
 
 const fakeExpenses: Expense[] = [
     { _id: 1, title: "Groceries", amount: 50 },
@@ -16,19 +21,22 @@ const fakeExpenses: Expense[] = [
     { _id: 5, title: "Internet Bill", amount: 80 },
 ];
 
-const postExpenseSchema = z.object({
-    title: z
-        .string()
-        .min(3, "Title should include more than 3 characters")
-        .max(25),
-    amount: z.number().int().positive(),
-});
+const postExpenseSchema = expenseSchema.omit({ _id: true });
 
 export const expensesRoutes = new Hono()
-    .get("/", (c) => c.json(fakeExpenses))
+    .get("/", (c) => {
+        c.status(201);
+        return c.json(fakeExpenses);
+    })
     .post("/", zValidator("json", postExpenseSchema), async (c) => {
         const data = await c.req.valid("json");
         const expense = { ...data, _id: fakeExpenses.length + 1 };
         fakeExpenses.push(expense);
         return c.json(expense);
+    })
+    .get("/:id{[0-9]+}", (c) => {
+        const id: Number = Number.parseInt(c.req.param("id"));
+        const expense = fakeExpenses.find((item) => item._id === id);
+        if (!expense) return c.notFound();
+        return c.json({ status: "Success", data: expense });
     });
