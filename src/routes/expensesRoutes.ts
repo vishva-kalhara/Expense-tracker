@@ -39,4 +39,13 @@ export const expensesRoutes = new Hono()
         const expense = fakeExpenses.find((item) => item._id === id);
         if (!expense) return c.notFound();
         return c.json({ status: "Success", data: expense });
+    })
+    .delete("/:id{[0-9]+}", (c) => {
+        const id: Number = Number.parseInt(c.req.param("id"));
+        const index = fakeExpenses.findIndex((item) => item._id === id);
+        if (index === -1) return c.notFound();
+
+        const deletedExpense = fakeExpenses.splice(index, 1)[0];
+        c.status(204);
+        return c.json({ status: "Success" });
     });
