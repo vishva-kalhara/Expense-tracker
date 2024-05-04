@@ -2,17 +2,6 @@ import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { z } from "zod";
 
-const expenseSchema = z.object({
-    _id: z.number().min(1).positive(),
-    title: z
-        .string()
-        .min(3, "Title should include more than 3 characters")
-        .max(25),
-    amount: z.number().int().positive(),
-});
-
-type Expense = z.infer<typeof expenseSchema>;
-
 const fakeExpenses: Expense[] = [
     { _id: 1, title: "Groceries", amount: 50 },
     { _id: 2, title: "Gasoline", amount: 30 },
@@ -20,6 +9,17 @@ const fakeExpenses: Expense[] = [
     { _id: 4, title: "Movie Tickets", amount: 25 },
     { _id: 5, title: "Internet Bill", amount: 80 },
 ];
+
+const expenseSchema = z.object({
+    _id: z.number().min(1).positive(),
+    title: z
+        .string({ message: "Please enter a valid title" })
+        .min(3, "Title should include more than 3 characters")
+        .max(25),
+    amount: z.number().int().positive(),
+});
+
+type Expense = z.infer<typeof expenseSchema>;
 
 const postExpenseSchema = expenseSchema.omit({ _id: true });
 
