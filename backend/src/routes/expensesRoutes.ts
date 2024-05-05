@@ -25,13 +25,13 @@ const postExpenseSchema = expenseSchema.omit({ _id: true });
 
 export const expensesRoutes = new Hono()
     .get("/", (c) => {
-        c.status(201);
         return c.json(fakeExpenses);
     })
     .post("/", zValidator("json", postExpenseSchema), async (c) => {
         const data = await c.req.valid("json");
         const expense = { ...data, _id: fakeExpenses.length + 1 };
         fakeExpenses.push(expense);
+        c.status(201);
         return c.json(expense);
     })
     .get("/:id{[0-9]+}", (c) => {
@@ -48,4 +48,13 @@ export const expensesRoutes = new Hono()
         const deletedExpense = fakeExpenses.splice(index, 1)[0];
         c.status(204);
         return c.json({ status: "Success" });
+    })
+    .get("/total-spent", (c) => {
+        const total = fakeExpenses.reduce((acc, item) => acc + item.amount, 0);
+        return c.json({
+            status: "Success",
+            data: {
+                totalSpent: total,
+            },
+        });
     });
